@@ -4,13 +4,15 @@
    ========================================================================== */
 
 .public-layout {
-  /* Brand gold. Fills use --accent with dark text on top; gold text uses
-     --accent-ink, a deeper shade that stays readable on light backgrounds. */
+  /* Brand gold. Light theme: white text on gold fills (with a faint shadow
+     for legibility). Gold text uses --accent-ink, a deeper shade that stays
+     readable on light backgrounds. Dark theme: dark text on gold. */
   --accent: #b39554;
   --accent-hover: #a3854a;
+  --on-accent-shadow: 0 1px 1px rgba(60, 40, 0, 0.28);
   --accent-light: rgba(179, 149, 84, 0.14);
   --accent-ink: #7a5f27;
-  --on-accent: #1d1608;
+  --on-accent: #ffffff;
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: rgba(26, 24, 20, 0.09);
   --surface-muted: #f3ecdc;
@@ -55,6 +57,7 @@
   --accent-hover: #c4a668;
   --accent-ink: #c8ad70;
   --on-accent: #0d0f0c;
+  --on-accent-shadow: none;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
   --glass-bg: rgba(21, 25, 20, 0.66);
@@ -87,7 +90,8 @@
 .public-layout .album-cover-placeholder,
 .public-layout .album-view-cover,
 .public-layout .song-album-cover { color: var(--accent-ink); }
-.public-layout .btn-primary { color: var(--on-accent); }
+.public-layout .btn-primary { color: var(--on-accent); font-weight: 600; text-shadow: var(--on-accent-shadow); }
+.public-layout .brand-mark { text-shadow: var(--on-accent-shadow); }
 .public-layout .btn { border-radius: 999px; }
 .public-layout input,
 .public-layout select { background: var(--bg-card); color: var(--text); border-color: var(--border); }
