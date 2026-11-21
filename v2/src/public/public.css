@@ -585,6 +585,9 @@
 .public-layout .public-result h3 { font-size: 22px; }
 
 /* Album + song pages ------------------------------------------------------ */
+.album-songs-toolbar { margin: 22px 0 10px; }
+.album-song-count { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.public-layout .sort-control select { min-width: 140px; border-radius: 999px; }
 .public-layout .card { background: var(--bg-card); border-color: var(--border); }
 .public-layout .album-view-cover,
 .public-layout .song-album-cover { background: var(--surface-muted); box-shadow: var(--shadow); }

@@ -1,14 +1,41 @@
-import { useEffect, useState } from 'react'
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, Disc, Link, Youtube } from 'lucide-react'
 import { api } from '../../api'
 import { displayTitle } from '../../shared/utils/titles'
 
+const SONG_SORT_OPTIONS = [
+  { value: 'title_asc', label: 'A–Z' },
+  { value: 'title_desc', label: 'Z–A' },
+  { value: 'track', label: 'Track order' },
+]
+
+const compareTitles = (a, b) => String(a.title).localeCompare(String(b.title), undefined, { numeric: true, sensitivity: 'base' })
+const compareTracks = (a, b) => (a.track_number ?? Infinity) - (b.track_number ?? Infinity) || compareTitles(a, b)
+
 export default function AlbumViewPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
   const [album, setAlbum] = useState(null)
   const [status, setStatus] = useState('loading')
+
+  // Alphabetical by default; the choice lives in the URL (?sort=) so it is
+  // kept on refresh and when the link is shared.
+  const sort = SONG_SORT_OPTIONS.some((option) => option.value === params.get('sort')) ? params.get('sort') : 'title_asc'
+  const sortedSongs = useMemo(() => {
+    const songs = [...(album?.songs || [])]
+    if (sort === 'track') return songs.sort(compareTracks)
+    songs.sort(compareTitles)
+    return sort === 'title_desc' ? songs.reverse() : songs
+  }, [album, sort])
+
+  const changeSort = (value) => {
+    const next = new URLSearchParams(params)
+    if (value === 'title_asc') next.delete('sort')
+    else next.set('sort', value)
+    setParams(next, { replace: true })
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -64,10 +91,24 @@ export default function AlbumViewPage() {
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: 20 }}>
+        {album.songs?.length > 0 && (
+          <div className="section-heading-row album-songs-toolbar">
+            <span className="album-song-count">{album.songs.length} song{album.songs.length !== 1 ? 's' : ''}</span>
+            <label className="sort-control">
+              <span>Sort</span>
+              <select value={sort} onChange={(event) => changeSort(event.target.value)}>
+                {SONG_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
+        <div className="card">
           {album.songs?.length ? (
             <ul className="song-list">
-              {album.songs.map((song) => (
+              {sortedSongs.map((song) => (
                 <li key={song.id}>
                   <RouterLink className="song-item" to={`/songs/${song.id}`}>
                     <span className="song-track">{song.track_number ?? '—'}</span>
