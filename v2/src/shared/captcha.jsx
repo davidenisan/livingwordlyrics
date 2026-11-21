@@ -23,7 +23,7 @@ function loadTurnstile() {
   return scriptPromise
 }
 
-export function Turnstile({ onToken, onExpire, onError, theme = 'auto' }) {
+export function Turnstile({ onToken, onExpire, onError, theme = 'auto', appearance = 'always' }) {
   const container = useRef(null)
   const handlers = useRef({ onToken, onExpire, onError })
   handlers.current = { onToken, onExpire, onError }
@@ -39,6 +39,7 @@ export function Turnstile({ onToken, onExpire, onError, theme = 'auto' }) {
         widgetId = turnstile.render(container.current, {
           sitekey: TURNSTILE_SITE_KEY,
           theme,
+          appearance,
           callback: (token) => handlers.current.onToken?.(token),
           'expired-callback': () => handlers.current.onExpire?.(),
           'error-callback': () => handlers.current.onError?.(new Error('Captcha check failed. Please try again.')),
@@ -50,7 +51,7 @@ export function Turnstile({ onToken, onExpire, onError, theme = 'auto' }) {
       cancelled = true
       if (widgetId !== null) window.turnstile?.remove(widgetId)
     }
-  }, [theme])
+  }, [theme, appearance])
 
   return <div ref={container} className="turnstile-slot" />
 }

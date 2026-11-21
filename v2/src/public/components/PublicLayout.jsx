@@ -97,6 +97,15 @@ export default function PublicLayout() {
       <main>
         <Outlet context={{ surprise, shuffling }} />
       </main>
+      <footer className="public-footer">
+        <p>Living Word Lyrics · Saints Community in Songs</p>
+        <p>
+          Privacy: we don&apos;t use accounts or tracking cookies for visitors. Song reactions use an anonymous
+          session and a background bot check by Cloudflare Turnstile, which is covered by the{' '}
+          <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noreferrer">Cloudflare Turnstile Privacy Addendum</a>.
+          Recent searches are shown without any information about who searched.
+        </p>
+      </footer>
     </div>
   )
 }

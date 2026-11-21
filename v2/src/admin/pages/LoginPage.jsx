@@ -18,7 +18,7 @@ export default function LoginPage({ onLoggedIn }) {
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (captchaConfigured && !captchaToken) {
-      setError('Please complete the verification first.')
+      setError('Still checking your browser. Please try again in a moment.')
       return
     }
     setError('')
@@ -63,6 +63,7 @@ export default function LoginPage({ onLoggedIn }) {
             <Turnstile
               key={captchaKey}
               theme="light"
+              appearance="interaction-only"
               onToken={setCaptchaToken}
               onExpire={() => setCaptchaToken('')}
               onError={(err) => setError(err.message)}

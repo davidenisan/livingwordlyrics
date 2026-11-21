@@ -596,7 +596,12 @@
 .reaction:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .reaction.is-active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
 .reaction.is-active .reaction-emoji { animation: reaction-pop 0.35s ease; }
-.reaction-emoji { font-size: 16px; line-height: 1; }
+.reaction-emoji { font-size: 18px; line-height: 1; }
+.reaction { min-width: 44px; min-height: 36px; justify-content: center; padding: 6px 12px; }
+.reaction.is-pending { border-color: var(--accent); }
+.reaction.is-pending .reaction-emoji { animation: reaction-wait 0.9s ease-in-out infinite; }
+@keyframes reaction-wait { 50% { transform: scale(1.25); opacity: 0.6; } }
+.captcha-background:empty { display: none; }
 .reaction-count { min-width: 14px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .reaction.is-active .reaction-count { color: inherit; }
 
@@ -620,6 +625,21 @@
 
 .captcha-panel p { color: var(--text-muted); font-size: 14px; }
 .reaction-note { margin-top: 8px; color: var(--text-muted); font-size: 13px; }
+
+/* Footer ------------------------------------------------------------------ */
+.public-footer {
+  max-width: 1120px;
+  margin: 24px auto 0;
+  padding: 24px 24px 40px;
+  border-top: 1px solid var(--border);
+  color: var(--text-light);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.public-footer p + p { margin-top: 6px; max-width: 760px; }
+.public-footer a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+.public-footer a:hover { color: var(--text); }
 
 /* Motion + small screens ------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {

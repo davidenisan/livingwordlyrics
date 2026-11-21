@@ -17,7 +17,7 @@ export default function ReactionBar({ songId }) {
   const [counts, setCounts] = useState(null)
   const [mine, setMine] = useState([])
   const [pending, setPending] = useState(null)
-  const [phase, setPhase] = useState('idle') // idle | captcha | verifying
+  const [phase, setPhase] = useState('idle') // idle | checking (background captcha) | verifying
   const [captchaKey, setCaptchaKey] = useState(0)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -62,30 +62,38 @@ export default function ReactionBar({ songId }) {
       setPending(null)
       await apply(key)
     } catch (err) {
-      setError(err.message || 'Verification failed. Please try again.')
-      setCaptchaKey((value) => value + 1) // tokens are single-use
-      setPhase(captchaConfigured ? 'captcha' : 'idle')
+      failCheck(err)
     }
   }
 
+  const failCheck = (err) => {
+    setPhase('idle')
+    setPending(null)
+    setCaptchaKey((value) => value + 1) // tokens are single-use; next click starts fresh
+    setError(err?.message?.includes('captcha') || !err?.message
+      ? "We couldn't confirm you're not a bot. Please try again."
+      : err.message)
+  }
+
   const handleClick = async (key) => {
-    if (busy || phase === 'verifying') return
+    if (busy || phase !== 'idle') return
     const session = await api.reactions.session().catch(() => null)
     if (session) {
       apply(key)
       return
     }
+    setError('')
     setPending(key)
-    if (captchaConfigured) setPhase('captcha')
+    if (captchaConfigured) setPhase('checking') // Turnstile runs in the background
     else startSession(undefined, key) // local development without a captcha
   }
 
   const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-  const pendingReaction = REACTIONS.find((reaction) => reaction.key === pending)
+  const working = phase !== 'idle'
 
   return (
     <div className="reaction-block">
-      <div className="reaction-bar" role="group" aria-label="React to this song">
+      <div className="reaction-bar" role="group" aria-label="React to this song" aria-busy={working}>
         {REACTIONS.map((reaction) => {
           const active = mine.includes(reaction.key)
           const count = counts[reaction.key] || 0
@@ -93,33 +101,33 @@ export default function ReactionBar({ songId }) {
             <button
               key={reaction.key}
               type="button"
-              className={`reaction ${active ? 'is-active' : ''}`}
+              className={`reaction ${active ? 'is-active' : ''} ${pending === reaction.key ? 'is-pending' : ''}`}
               aria-pressed={active}
-              aria-label={`${reaction.label}${count ? ` (${count})` : ''}`}
+              aria-label={`${reaction.label}${count ? `, ${count}` : ''}`}
+              title={reaction.label}
               onClick={() => handleClick(reaction.key)}
             >
               <span className="reaction-emoji" aria-hidden="true">{reaction.emoji}</span>
-              <span>{reaction.label}</span>
               {count > 0 && <span className="reaction-count">{count}</span>}
             </button>
           )
         })}
       </div>
 
-      {phase === 'captcha' && (
-        <div className="captcha-panel" role="dialog" aria-label="Verify you are human">
-          <p>Quick check before your first reaction{pendingReaction ? ` (${pendingReaction.emoji} ${pendingReaction.label})` : ''}. This keeps the counts honest; you only do it once on this device.</p>
+      {/* Background bot check (Turnstile invisible mode): no visible widget.
+          If Cloudflare ever needs a click, interaction-only shows it here. */}
+      {phase === 'checking' && (
+        <div className="captcha-background">
           <Turnstile
             key={captchaKey}
             theme={theme}
+            appearance="interaction-only"
             onToken={(token) => startSession(token, pending)}
-            onExpire={() => setCaptchaKey((value) => value + 1)}
-            onError={(err) => setError(err.message)}
+            onExpire={() => failCheck()}
+            onError={(err) => failCheck(err)}
           />
-          <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setPhase('idle'); setPending(null); setError('') }}>Not now</button>
         </div>
       )}
-      {phase === 'verifying' && <p className="reaction-note" aria-live="polite">Verifying...</p>}
       {error && <p className="reaction-note public-status-error" role="alert">{error}</p>}
     </div>
   )
