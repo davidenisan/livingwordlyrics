@@ -142,7 +142,10 @@ export default function HomePage() {
           </div>
         )}
         <span className="hero-eyebrow">Saints Community in Songs</span>
-        <h1>Find Saint Community Church Songs Lyrics fast</h1>
+        <h1>
+          <span className="hero-line">Find Saints Community Church</span>{' '}
+          <span className="hero-line">Song Lyrics Fast</span>
+        </h1>
         <p className="hero-sub">Songs, lyrics, and writers from the Living Word library.</p>
         <form
           className="home-search"
