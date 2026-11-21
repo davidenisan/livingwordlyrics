@@ -1,24 +1,51 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Disc, Link, Youtube } from 'lucide-react'
 import { api } from '../../api'
-import { hasUsableLyrics } from '../../shared/utils/lyrics'
 
 export default function AlbumViewPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [album, setAlbum] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState('loading')
 
   useEffect(() => {
+    let cancelled = false
+    setStatus('loading')
     api.albums.get(id)
-      .then(setAlbum)
-      .catch(() => navigate('/'))
-      .finally(() => setLoading(false))
+      .then((result) => {
+        if (cancelled) return
+        setAlbum(result)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('error')
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
-  if (loading) return <div className="public-page">Loading...</div>
-  if (!album) return null
+  useEffect(() => {
+    if (album?.title) document.title = `${album.title} · Living Word Lyrics`
+    return () => { document.title = 'Living Word Lyrics' }
+  }, [album?.title])
+
+  if (status === 'loading') return <div className="public-page" aria-busy="true">Loading...</div>
+
+  if (status === 'error' || !album) {
+    return (
+      <div className="public-page">
+        <section className="public-section">
+          <h1>Album not available</h1>
+          <p style={{ color: 'var(--text-muted)', margin: '8px 0 16px' }}>
+            This album could not be loaded. It may have been removed, or the library is temporarily unavailable.
+          </p>
+          <button className="btn btn-secondary" onClick={() => navigate('/')}>Back to all albums</button>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="public-page">
@@ -37,24 +64,30 @@ export default function AlbumViewPage() {
         </div>
 
         <div className="card" style={{ marginTop: 20 }}>
-          <ul className="song-list">
-            {album.songs?.map((song) => (
-              <li key={song.id} className="song-item" onClick={() => navigate(`/songs/${song.id}`)}>
-                <span className="song-track">{song.track_number ?? '—'}</span>
-                <div style={{ flex: 1 }}>
-                  <div className="song-title">{song.title}</div>
-                  {song.songwriters && <div className="search-result-meta">Words &amp; Music: {song.songwriters}</div>}
-                </div>
-                <div className="song-badges">
-                  {hasUsableLyrics(song.lyrics)
-                    ? <span className="badge badge-lyrics">lyrics</span>
-                    : <span className="badge badge-no-lyrics">No lyrics yet</span>}
-                  {song.youtube_url && <span className="badge badge-yt"><Youtube size={10} /></span>}
-                  {song.lwm_url && <span className="badge badge-lwm"><Link size={10} /></span>}
-                </div>
-              </li>
-            ))}
-          </ul>
+          {album.songs?.length ? (
+            <ul className="song-list">
+              {album.songs.map((song) => (
+                <li key={song.id}>
+                  <RouterLink className="song-item" to={`/songs/${song.id}`}>
+                    <span className="song-track">{song.track_number ?? '—'}</span>
+                    <div style={{ flex: 1 }}>
+                      <div className="song-title">{song.title}</div>
+                      {song.songwriters && <div className="search-result-meta">Words &amp; Music: {song.songwriters}</div>}
+                    </div>
+                    <div className="song-badges">
+                      {song.has_lyrics
+                        ? <span className="badge badge-lyrics">lyrics</span>
+                        : <span className="badge badge-no-lyrics">No lyrics yet</span>}
+                      {song.youtube_url && <span className="badge badge-yt" aria-label="Has YouTube video"><Youtube size={10} /></span>}
+                      {song.lwm_url && <span className="badge badge-lwm" aria-label="Has Living Word Media link"><Link size={10} /></span>}
+                    </div>
+                  </RouterLink>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ color: 'var(--text-muted)', padding: '16px 20px' }}>No songs in this album yet.</p>
+          )}
         </div>
       </section>
     </div>

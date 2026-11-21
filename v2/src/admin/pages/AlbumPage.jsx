@@ -3,22 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Plus, ChevronLeft, Music, X, Trash2, Youtube, Link, Upload } from 'lucide-react'
 import { api } from '../../api'
 
-function hasUsableLyrics(lyrics) {
-  if (!lyrics) return false
-
-  const plain = String(lyrics)
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase()
-
-  if (!plain) return false
-  if (plain.includes('no lyrics for this yet')) return false
-  if (plain.includes('no lyrics yet')) return false
-
-  return true
-}
-
 function AddSongModal({ albumId, onClose, onSave }) {
   const [form, setForm] = useState({ title: '', track_number: '', youtube_url: '', lwm_url: '', songwriters: '' })
   const [saving, setSaving] = useState(false)
@@ -299,7 +283,7 @@ export default function AlbumPage({ onRefresh, showToast }) {
                 <span className="song-track">{song.track_number ?? '—'}</span>
                 <span className="song-title">{song.title}</span>
                 <div className="song-badges">
-                  {hasUsableLyrics(song.lyrics)
+                  {song.has_lyrics
                     ? <span className="badge badge-lyrics">lyrics</span>
                     : <span className="badge badge-no-lyrics">No lyrics yet</span>}
                   {song.youtube_url && <span className="badge badge-yt"><Youtube size={10} /></span>}

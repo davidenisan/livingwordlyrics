@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Copy, Disc, Link, Youtube } from 'lucide-react'
 import { api } from '../../api'
 import ProjectionOverlay from '../../shared/components/ProjectionOverlay'
@@ -9,17 +9,40 @@ import { getYouTubeEmbedUrl } from '../../shared/utils/media'
 export default function SongViewPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [song, setSong] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState('loading')
   const [copied, setCopied] = useState(false)
   const [projectionMode, setProjectionMode] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+    setStatus('loading')
     api.songs.get(id)
-      .then(setSong)
-      .catch(() => navigate('/'))
-      .finally(() => setLoading(false))
+      .then((result) => {
+        if (cancelled) return
+        setSong(result)
+        setStatus('ready')
+      })
+      .catch(() => {
+        if (!cancelled) setStatus('error')
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
+
+  useEffect(() => {
+    if (song?.title) document.title = `${song.title} · Living Word Lyrics`
+    return () => { document.title = 'Living Word Lyrics' }
+  }, [song?.title])
+
+  // A shared or refreshed song link has no in-app history to go back to, so
+  // "Back" goes to the song's album instead of leaving the site.
+  const handleBack = () => {
+    if (location.key !== 'default') navigate(-1)
+    else navigate(song?.album_id ? `/albums/${song.album_id}` : '/')
+  }
 
   useEffect(() => {
     if (!projectionMode) return undefined
@@ -36,13 +59,30 @@ export default function SongViewPage() {
 
   const handleCopyLyrics = async () => {
     if (!song?.lyrics) return
-    await navigator.clipboard.writeText(htmlToPlainLyrics(song.lyrics))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1800)
+    try {
+      await navigator.clipboard.writeText(htmlToPlainLyrics(song.lyrics))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      // Clipboard access can be blocked; leave the button unchanged.
+    }
   }
 
-  if (loading) return <div className="public-page">Loading...</div>
-  if (!song) return null
+  if (status === 'loading') return <div className="public-page" aria-busy="true">Loading...</div>
+
+  if (status === 'error' || !song) {
+    return (
+      <div className="public-page">
+        <section className="public-section">
+          <h1>Song not available</h1>
+          <p style={{ color: 'var(--text-muted)', margin: '8px 0 16px' }}>
+            This song could not be loaded. It may have been removed, or the library is temporarily unavailable.
+          </p>
+          <button className="btn btn-secondary" onClick={() => navigate('/')}>Back to all albums</button>
+        </section>
+      </div>
+    )
+  }
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(song.youtube_url)
   const embedKey = `${song.id}-${youtubeEmbedUrl || 'none'}`
@@ -50,7 +90,7 @@ export default function SongViewPage() {
   return (
     <div className="public-page">
       <section className="public-section">
-        <button className="btn btn-ghost" onClick={() => navigate(-1)}>
+        <button className="btn btn-ghost" onClick={handleBack}>
           <ChevronLeft size={14} /> Back
         </button>
 
@@ -80,7 +120,7 @@ export default function SongViewPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button className="btn btn-secondary" onClick={handleCopyLyrics}>
+            <button className="btn btn-secondary" onClick={handleCopyLyrics} disabled={!song.lyrics}>
               <Copy size={14} /> {copied ? 'Copied' : 'Copy lyrics'}
             </button>
             <button className="btn btn-primary" onClick={() => setProjectionMode(true)}>

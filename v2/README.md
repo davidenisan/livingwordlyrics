@@ -4,27 +4,28 @@ This is an isolated, deployable v2 application. Nothing here modifies or depends
 
 ## Why this architecture
 
-- **Vercel or Netlify:** host the Vite frontend as static files.
+- **Cloudflare Pages:** hosts the Vite build as static files. No Worker or server is needed.
 - **Supabase Postgres:** replaces the non-persistent SQLite database.
 - **Supabase Auth:** replaces the environment-variable admin account and JWT cookie.
 - **Supabase Row Level Security:** makes albums and songs public to read, but editable only by users in `admin_users`.
 
-The browser must use only the publishable key. The service-role key is for the one-time import script and must never be exposed in frontend code or a Vercel/Netlify public environment variable.
+The browser must use only the publishable key. The service-role key is for the one-time import script and must never be exposed in frontend code or a public build environment variable.
 
 ## Initial setup
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/001_initial_schema.sql` in its SQL Editor.
 3. In Supabase Auth, create the first admin user (email/password is sufficient).
-4. Add that user to the admin allow-list in the SQL Editor:
+4. Run `supabase/migrations/002_slim_public_queries.sql` as well. It adds the `has_lyrics` computed column and the `search_songs` function, which keep lyric bodies out of list and search responses. The app still works without it, but it downloads more data.
+5. Add that user to the admin allow-list in the SQL Editor:
 
    ```sql
    insert into public.admin_users (user_id)
    values ('the-auth-user-uuid');
    ```
 
-5. Copy `.env.example` to `.env` and add the project URL plus service-role key.
-6. From this directory, run `npm install`, then `npm run migrate:data`.
+6. Copy `.env.example` to `.env` and add the project URL plus service-role key.
+7. From this directory, run `npm install`, then `npm run migrate:data`.
 
 The importer upserts IDs from `../backend/lyrics.db`; it can be safely re-run before go-live.
 
@@ -36,22 +37,33 @@ npm run dev
 
 The app reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from `.env`. It uses Supabase Auth for the admin login, Row Level Security for database writes, and a browser-based DOCX parser—no Express server, SQLite file, or Python runtime is required.
 
-## Deploy
+## Deploy (Cloudflare Pages)
 
-Deploy the `v2` directory as the project root on either platform:
+Create a **Pages** project (Workers & Pages → Create → **Pages** → connect to Git). Do not create a Worker: a Worker project runs `npx wrangler deploy`, which fails for this app.
 
-- **Vercel:** build command `npm run build`, output directory `dist`. `vercel.json` provides the required SPA rewrite.
-- **Netlify:** `netlify.toml` already provides the build, publish, and SPA rewrite configuration.
+| Setting | Value |
+| --- | --- |
+| Production branch | `main` |
+| Framework preset | None (or Vite) |
+| Root directory | `v2` |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Deploy command | leave empty |
+| Node version | `20` (pinned by `.nvmrc`) |
 
-Add these environment variables in the host's build environment:
+Add these variables to **both** Production and Preview, then redeploy:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Do not add `SUPABASE_SERVICE_ROLE_KEY` to Vercel or Netlify. It was only used locally by the one-time importer and normalizer.
+Never add `SUPABASE_SERVICE_ROLE_KEY`, the database password, or a connection string to Pages.
+
+Routing: there is deliberately no `404.html` and no `_redirects`. With no top-level `404.html`, Pages serves `index.html` for every unknown path, so deep links such as `/songs/1` or `/admin` work on hard refresh. (Cloudflare ignores the usual `/* /index.html 200` rule as a redirect loop.) `public/_headers` caches fingerprinted `/assets/*` files for a year.
+
+`netlify.toml` and `vercel.json` are kept for those hosts but are not used by Cloudflare.
 
 ## Deferred server-only feature
 
-Google Analytics reporting is intentionally not included in the static v2 build: its service-account key must stay server-side. Add it later through a protected Vercel or Netlify function if the dashboard analytics panel is still needed.
+Google Analytics reporting is intentionally not included in the static v2 build: its service-account key must stay server-side. Add it later through a protected Cloudflare Pages Function if the dashboard analytics panel is still needed.

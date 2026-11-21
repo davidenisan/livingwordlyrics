@@ -26,9 +26,10 @@ export default function PublicLayout() {
     <div className="public-layout">
       <header className="public-header">
         <Link className="public-brand" to="/">Living Word Lyrics</Link>
-        <form className="public-header-search" onSubmit={handleSubmit}>
+        <form className="public-header-search" onSubmit={handleSubmit} role="search">
           <Search size={16} />
           <input
+            aria-label="Search songs, lyrics, songwriters"
             placeholder="Search songs, lyrics, songwriters..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}

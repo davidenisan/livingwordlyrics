@@ -44,7 +44,7 @@ export function decodeHtmlEntities(value = '') {
 }
 
 export function searchTerms(query = '') {
-  const normalized = decodeHtmlEntities(query).toLowerCase().match(/[a-z0-9']+/gi) || []
+  const normalized = decodeHtmlEntities(query).replace(/[\u2018\u2019]/g, "'").toLowerCase().match(/[a-z0-9']+/gi) || []
   return [...new Set(normalized.filter((term) => term.length > 1))]
 }
 
