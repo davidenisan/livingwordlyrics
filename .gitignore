@@ -6,4 +6,5 @@ backend/node_modules/
 .DS_Store
 
 frontend/dist/
+v2/dist/
 *.log
