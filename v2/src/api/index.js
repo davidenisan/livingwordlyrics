@@ -95,9 +95,13 @@ function ilikeValue(value) {
 
 export const api = {
   auth: {
-    async login({ username, password }) {
+    async login({ username, password, captchaToken }) {
       const supabase = await getSupabase()
-      const { data, error } = await supabase.auth.signInWithPassword({ email: username.trim(), password })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username.trim(),
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      })
       if (error) throw new Error(error.message)
       if (!unwrap(await supabase.rpc('is_lyrics_admin'))) { await supabase.auth.signOut(); throw new Error('This account is not an admin.') }
       return { user: { username: data.user.email } }
@@ -181,6 +185,74 @@ export const api = {
     create(albumId, form) { return adminWrite(async (supabase) => unwrap(await supabase.from('songs').insert({ ...form, album_id: Number(albumId), track_number: nullable(form.track_number), lyrics: nullable(form.lyrics) }).select().single())) },
     update(id, form) { return adminWrite(async (supabase) => unwrap(await supabase.from('songs').update({ ...form, track_number: nullable(form.track_number), lyrics: nullable(form.lyrics) }).eq('id', id).select().single())) },
     delete(id) { return adminWrite(async (supabase) => { unwrap(await supabase.from('songs').delete().eq('id', id)); return { success: true } }) },
+  },
+  searches: {
+    // Site-wide recent searches (migration 003). Empty until it is applied.
+    async recent(limit = 12) {
+      assertConfigured()
+      const { data, error } = await db.rpc('recent_searches', { max_rows: limit })
+      if (error) {
+        if (MISSING_FEATURE_CODES.has(error.code)) return []
+        throw new Error(error.message)
+      }
+      return data
+    },
+    // Fire-and-forget. The server only records queries that match a song.
+    log(query) {
+      const value = String(query || '').trim()
+      if (configurationError || value.length < 3) return
+      db.rpc('log_search', { search_query: value }).then(() => {}, () => {})
+    },
+  },
+  reactions: {
+    // Public counts as { pray: 3, love: 1, ... }, or null when migration 003
+    // has not been applied (the UI then hides reactions).
+    async counts(songId) {
+      assertConfigured()
+      const { data, error } = await db.rpc('song_reaction_counts', { target_song_id: Number(songId) })
+      if (error) {
+        if (MISSING_FEATURE_CODES.has(error.code)) return null
+        throw new Error(error.message)
+      }
+      return Object.fromEntries(data.map((row) => [row.reaction, Number(row.total)]))
+    },
+    // Avoids downloading the auth client for visitors who never signed in.
+    hasStoredSession() {
+      try {
+        return Object.keys(localStorage).some((key) => key.startsWith('sb-') && key.endsWith('-auth-token'))
+      } catch {
+        return false
+      }
+    },
+    async session() {
+      if (!this.hasStoredSession()) return null
+      const supabase = await getSupabase()
+      const { data: { session } } = await supabase.auth.getSession()
+      return session
+    },
+    async mine(songId) {
+      const session = await this.session()
+      if (!session) return []
+      const supabase = await getSupabase()
+      const rows = unwrap(await supabase.from('song_reactions').select('reaction').eq('song_id', Number(songId)))
+      return rows.map((row) => row.reaction)
+    },
+    // Anonymous Supabase session, allowed by Supabase Auth only with a valid
+    // Turnstile token once captcha protection is enabled.
+    async startSession(captchaToken) {
+      const supabase = await getSupabase()
+      const { error } = await supabase.auth.signInAnonymously({ options: captchaToken ? { captchaToken } : undefined })
+      if (error) throw new Error(error.message)
+    },
+    async set(songId, reaction, active) {
+      const supabase = await getSupabase()
+      if (active) {
+        const { error } = await supabase.from('song_reactions').insert({ song_id: Number(songId), reaction })
+        if (error && error.code !== '23505') throw new Error(error.message)
+      } else {
+        unwrap(await supabase.from('song_reactions').delete().eq('song_id', Number(songId)).eq('reaction', reaction))
+      }
+    },
   },
   stats: {
     async summary() {

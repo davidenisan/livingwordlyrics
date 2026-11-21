@@ -1,26 +1,37 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api'
+import { Turnstile, captchaConfigured } from '../../shared/captcha'
 
 export default function LoginPage({ onLoggedIn }) {
   const navigate = useNavigate()
   const [form, setForm] = useState({ username: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Supabase Auth requires a captcha token on every sign-in once captcha
+  // protection is on. Tokens are single-use, so the widget resets after a try.
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaKey, setCaptchaKey] = useState(0)
 
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }))
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (captchaConfigured && !captchaToken) {
+      setError('Please complete the verification first.')
+      return
+    }
     setError('')
     setLoading(true)
 
     try {
-      await api.auth.login(form)
+      await api.auth.login({ ...form, captchaToken })
       await onLoggedIn()
       navigate('/admin')
     } catch (err) {
       setError(err.message || 'Login failed')
+      setCaptchaToken('')
+      setCaptchaKey((value) => value + 1)
     } finally {
       setLoading(false)
     }
@@ -46,6 +57,18 @@ export default function LoginPage({ onLoggedIn }) {
             autoComplete="current-password"
           />
         </div>
+
+        {captchaConfigured && (
+          <div className="form-group">
+            <Turnstile
+              key={captchaKey}
+              theme="light"
+              onToken={setCaptchaToken}
+              onExpire={() => setCaptchaToken('')}
+              onError={(err) => setError(err.message)}
+            />
+          </div>
+        )}
 
         {error && <p className="auth-error">{error}</p>}
 

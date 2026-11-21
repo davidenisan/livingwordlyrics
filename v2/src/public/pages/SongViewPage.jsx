@@ -3,6 +3,10 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Copy, Disc, Link, Youtube } from 'lucide-react'
 import { api } from '../../api'
 import ProjectionOverlay from '../../shared/components/ProjectionOverlay'
+import ReactionBar from '../components/ReactionBar'
+import ScrollRow from '../components/ScrollRow'
+import SectionHead from '../components/SectionHead'
+import SongCard from '../components/SongCard'
 import { htmlToPlainLyrics } from '../../shared/utils/lyrics'
 import { getYouTubeEmbedUrl } from '../../shared/utils/media'
 
@@ -14,6 +18,7 @@ export default function SongViewPage() {
   const [status, setStatus] = useState('loading')
   const [copied, setCopied] = useState(false)
   const [projectionMode, setProjectionMode] = useState(false)
+  const [album, setAlbum] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -31,6 +36,14 @@ export default function SongViewPage() {
       cancelled = true
     }
   }, [id])
+
+  // The rest of the album, starting after this track ("Up next").
+  useEffect(() => {
+    if (!song?.album_id) return undefined
+    let cancelled = false
+    api.albums.get(song.album_id).then((detail) => { if (!cancelled) setAlbum(detail) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [song?.album_id])
 
   useEffect(() => {
     if (song?.title) document.title = `${song.title} · Living Word Lyrics`
@@ -84,6 +97,10 @@ export default function SongViewPage() {
     )
   }
 
+  const albumSongs = album?.id === song.album_id ? album.songs : []
+  const position = albumSongs.findIndex((item) => item.id === song.id)
+  const upNext = position === -1 ? [] : [...albumSongs.slice(position + 1), ...albumSongs.slice(0, position)]
+
   const youtubeEmbedUrl = getYouTubeEmbedUrl(song.youtube_url)
   const embedKey = `${song.id}-${youtubeEmbedUrl || 'none'}`
 
@@ -116,6 +133,7 @@ export default function SongViewPage() {
                 </a>
               )}
             </div>
+            <ReactionBar songId={song.id} />
             </div>
           </div>
 
@@ -156,6 +174,17 @@ export default function SongViewPage() {
           )}
         </div>
       </section>
+
+      {upNext.length > 0 && (
+        <section className="public-section" aria-labelledby="up-next-heading">
+          <SectionHead kicker="Up next" title={`More from ${album.title}`} id="up-next-heading" />
+          <ScrollRow label={`More songs from ${album.title}`}>
+            {upNext.map((item) => (
+              <SongCard key={item.id} song={item} coverUrl={album.cover_url} />
+            ))}
+          </ScrollRow>
+        </section>
+      )}
 
       {projectionMode && <ProjectionOverlay html={song.lyrics} onClose={() => setProjectionMode(false)} />}
     </div>
