@@ -1,5 +1,6 @@
 import { Link as RouterLink } from 'react-router-dom'
 import { Disc3, Link, Youtube } from 'lucide-react'
+import { displayTitle } from '../../shared/utils/titles'
 
 export default function SongCard({ song, coverUrl, meta }) {
   return (
@@ -9,7 +10,7 @@ export default function SongCard({ song, coverUrl, meta }) {
         {song.track_number != null && <span className="song-card-track">{song.track_number}</span>}
       </span>
       <span style={{ minWidth: 0 }}>
-        <span className="song-card-title" style={{ display: 'block' }}>{song.title}</span>
+        <span className="song-card-title" style={{ display: 'block' }}>{displayTitle(song.title)}</span>
         <span className="song-card-meta" style={{ display: 'block' }}>{meta ?? (song.songwriters || 'Saints Community')}</span>
         <span className="song-badges">
           {song.has_lyrics

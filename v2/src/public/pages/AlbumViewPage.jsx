@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Disc, Link, Youtube } from 'lucide-react'
 import { api } from '../../api'
+import { displayTitle } from '../../shared/utils/titles'
 
 export default function AlbumViewPage() {
   const { id } = useParams()
@@ -27,7 +28,7 @@ export default function AlbumViewPage() {
   }, [id])
 
   useEffect(() => {
-    if (album?.title) document.title = `${album.title} · Living Word Lyrics`
+    if (album?.title) document.title = `${displayTitle(album.title)} · Living Word Lyrics`
     return () => { document.title = 'Living Word Lyrics' }
   }, [album?.title])
 
@@ -55,10 +56,10 @@ export default function AlbumViewPage() {
         </button>
         <div className="album-view-header">
           <div className="album-view-cover">
-            {album.cover_url ? <img src={album.cover_url} alt={`${album.title} cover`} /> : <Disc size={36} />}
+            {album.cover_url ? <img src={album.cover_url} alt={`${displayTitle(album.title)} cover`} /> : <Disc size={36} />}
           </div>
           <div>
-            <h1 style={{ marginTop: 10 }}>{album.title}</h1>
+            <h1 style={{ marginTop: 10 }}>{displayTitle(album.title)}</h1>
             {album.description && <p style={{ color: 'var(--text-muted)' }}>{album.description}</p>}
           </div>
         </div>
@@ -71,7 +72,7 @@ export default function AlbumViewPage() {
                   <RouterLink className="song-item" to={`/songs/${song.id}`}>
                     <span className="song-track">{song.track_number ?? '—'}</span>
                     <div style={{ flex: 1 }}>
-                      <div className="song-title">{song.title}</div>
+                      <div className="song-title">{displayTitle(song.title)}</div>
                       {song.songwriters && <div className="search-result-meta">Words &amp; Music: {song.songwriters}</div>}
                     </div>
                     <div className="song-badges">

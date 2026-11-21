@@ -29,7 +29,7 @@ body {
   min-height: 100vh;
 }
 
-h1, h2, h3 { font-family: 'Lora', serif; font-weight: 600; line-height: 1.3; }
+h1, h2, h3 { font-family: 'EB Garamond', Georgia, serif; font-weight: 600; line-height: 1.3; }
 
 a { color: inherit; text-decoration: none; }
 
@@ -130,7 +130,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent); }
 }
 
 .sidebar-logo {
-  font-family: 'Lora', serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 17px;
   font-weight: 600;
   color: var(--accent);
@@ -343,7 +343,7 @@ a.album-card, a.public-result { display: block; }
 .album-cover img { width: 100%; height: 100%; object-fit: cover; }
 .album-cover-placeholder { color: var(--accent); opacity: 0.5; }
 
-.album-title { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.album-title { font-family: 'EB Garamond', Georgia, serif; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .album-meta { font-size: 13px; color: var(--text-muted); }
 
 /* Song list */
@@ -440,7 +440,7 @@ a.album-card, a.public-result { display: block; }
 .tiptap-editor {
   padding: 14px 16px;
   min-height: 240px;
-  font-family: 'Lora', serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 15px;
   line-height: 1.9;
   outline: none;
@@ -516,7 +516,7 @@ a.album-card, a.public-result { display: block; }
 
 /* Lyrics view (read-only) */
 .lyrics-view {
-  font-family: 'Lora', serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 20px;
   line-height: 2.1;
   color: var(--text);
@@ -579,7 +579,7 @@ a.album-card, a.public-result { display: block; }
 }
 
 .projection-lyrics {
-  font-family: 'Lora', serif;
+  font-family: 'EB Garamond', Georgia, serif;
   color: #000;
   font-size: clamp(26px, 3.2vw, 48px);
   line-height: 1.95;
@@ -928,7 +928,7 @@ button.metric-card:hover {
 }
 
 .public-brand {
-  font-family: 'Lora', serif;
+  font-family: 'EB Garamond', Georgia, serif;
   font-size: 22px;
   color: var(--accent);
   font-weight: 600;

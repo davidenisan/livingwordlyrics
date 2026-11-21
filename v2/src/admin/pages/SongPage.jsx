@@ -180,7 +180,7 @@ export default function SongPage({ showToast }) {
               <input
                 value={form.title}
                 onChange={(event) => set('title', event.target.value)}
-                style={{ fontSize: 22, fontFamily: 'Lora, serif', fontWeight: 600, width: 'auto', minWidth: 280 }}
+                style={{ fontSize: 22, fontFamily: "'EB Garamond', Georgia, serif", fontWeight: 600, width: 'auto', minWidth: 280 }}
               />
               <input
                 type="number"

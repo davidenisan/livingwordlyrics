@@ -9,6 +9,7 @@ import SectionHead from '../components/SectionHead'
 import SongCard from '../components/SongCard'
 import { htmlToPlainLyrics } from '../../shared/utils/lyrics'
 import { getYouTubeEmbedUrl } from '../../shared/utils/media'
+import { displayTitle } from '../../shared/utils/titles'
 
 export default function SongViewPage() {
   const { id } = useParams()
@@ -46,7 +47,7 @@ export default function SongViewPage() {
   }, [song?.album_id])
 
   useEffect(() => {
-    if (song?.title) document.title = `${song.title} · Living Word Lyrics`
+    if (song?.title) document.title = `${displayTitle(song.title)} · Living Word Lyrics`
     return () => { document.title = 'Living Word Lyrics' }
   }, [song?.title])
 
@@ -114,11 +115,11 @@ export default function SongViewPage() {
         <div className="song-detail-header" style={{ marginTop: 16 }}>
           <div className="song-title-with-cover">
             <div className="song-album-cover">
-              {song.album_cover_url ? <img src={song.album_cover_url} alt={`${song.album_title} cover`} /> : <Disc size={24} />}
+              {song.album_cover_url ? <img src={song.album_cover_url} alt={`${displayTitle(song.album_title)} cover`} /> : <Disc size={24} />}
             </div>
             <div>
-            <h1 style={{ fontSize: 32 }}>{song.title}</h1>
-            <p className="search-result-album">{song.album_title}</p>
+            <h1 style={{ fontSize: 32 }}>{displayTitle(song.title)}</h1>
+            <p className="search-result-album">{displayTitle(song.album_title)}</p>
             {song.songwriters && <p className="songwriters-meta">Words &amp; Music: {song.songwriters}</p>}
 
             <div className="song-links">
@@ -163,7 +164,7 @@ export default function SongViewPage() {
                 <iframe
                   key={embedKey}
                   src={youtubeEmbedUrl}
-                  title={`${song.title} video`}
+                  title={`${displayTitle(song.title)} video`}
                   className="song-embed-frame"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   referrerPolicy="strict-origin-when-cross-origin"
@@ -177,8 +178,8 @@ export default function SongViewPage() {
 
       {upNext.length > 0 && (
         <section className="public-section" aria-labelledby="up-next-heading">
-          <SectionHead kicker="Up next" title={`More from ${album.title}`} id="up-next-heading" />
-          <ScrollRow label={`More songs from ${album.title}`}>
+          <SectionHead kicker="Up next" title={`More from ${displayTitle(album.title)}`} id="up-next-heading" />
+          <ScrollRow label={`More songs from ${displayTitle(album.title)}`}>
             {upNext.map((item) => (
               <SongCard key={item.id} song={item} coverUrl={album.cover_url} />
             ))}

@@ -4,6 +4,7 @@ import { ArrowUpRight, Disc3, History, Link, Search, Shuffle, Youtube } from 'lu
 import { api } from '../../api'
 import { ALBUM_SORT_OPTIONS, sortAlbums } from '../../shared/utils/albums'
 import { highlightText, searchMatchSnippet } from '../../shared/utils/lyrics'
+import { displayTitle } from '../../shared/utils/titles'
 import ScrollRow from '../components/ScrollRow'
 import SectionHead from '../components/SectionHead'
 import SongCard from '../components/SongCard'
@@ -223,12 +224,12 @@ export default function HomePage() {
         <>
           {newest?.songs?.length > 0 && (
             <section className="public-section" aria-labelledby="newest-heading">
-              <SectionHead kicker="Newest volume" title={newest.title} id="newest-heading">
+              <SectionHead kicker="Newest volume" title={displayTitle(newest.title)} id="newest-heading">
                 <RouterLink className="pill-link" to={`/albums/${newest.id}`}>
                   Open album <ArrowUpRight size={14} />
                 </RouterLink>
               </SectionHead>
-              <ScrollRow label={`Songs from ${newest.title}`}>
+              <ScrollRow label={`Songs from ${displayTitle(newest.title)}`}>
                 {newest.songs.map((song) => (
                   <SongCard key={song.id} song={song} coverUrl={newest.cover_url} />
                 ))}
@@ -268,7 +269,7 @@ export default function HomePage() {
                   <div className="album-cover">
                     {album.cover_url ? <img src={album.cover_url} alt="" loading="lazy" decoding="async" /> : <Disc3 size={36} className="album-cover-placeholder" />}
                   </div>
-                  <div className="album-title">{album.title}</div>
+                  <div className="album-title">{displayTitle(album.title)}</div>
                   <div className="album-meta">
                     {album.year && <span className="album-meta-pill">{album.year}</span>}
                     {album.song_count} song{album.song_count !== 1 ? 's' : ''}
@@ -295,8 +296,8 @@ function SearchResult({ song, query, onOpen }) {
         {song.album_cover_url ? <img src={song.album_cover_url} alt="" loading="lazy" decoding="async" /> : <Disc3 size={20} />}
       </span>
       <div className="public-result-body">
-        <h3>{renderHighlighted(song.title, query)}</h3>
-        <p className="public-result-meta">{song.album_title}</p>
+        <h3>{renderHighlighted(displayTitle(song.title), query)}</h3>
+        <p className="public-result-meta">{displayTitle(song.album_title)}</p>
         {song.songwriters && (
           <p className="public-result-meta">Words &amp; Music: {renderHighlighted(song.songwriters, query)}</p>
         )}
