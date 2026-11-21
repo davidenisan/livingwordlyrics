@@ -22,7 +22,7 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0d0f0c' : '#11261b')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0d0f0c' : '#b39554')
   }, [theme])
 
   useEffect(() => {
