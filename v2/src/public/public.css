@@ -573,9 +573,10 @@
 /* Song titles use EB Garamond. Capitalisation is done by displayTitle()
    in src/shared/utils/titles.js (display only). */
 .song-card-title,
-.public-layout .song-title {
+.public-layout .song-title,
+.public-layout .album-title {
   font-family: 'EB Garamond', Georgia, serif;
-  font-weight: 600;
+  font-weight: 500; /* medium in lists; page headings stay semi-bold */
 }
 
 .song-card-title { font-size: 17px; }
