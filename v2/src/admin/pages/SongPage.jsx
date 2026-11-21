@@ -1,44 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, Extension } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { ChevronLeft, Youtube, Link, Save, Pencil, X, Bold, Italic, Heading2, Heading3, Quote } from 'lucide-react'
 import { api } from '../../api'
 import ProjectionOverlay from '../../shared/components/ProjectionOverlay'
+import { splitLyricLines } from '../../shared/utils/lyrics'
+
+// Shift+Enter starts a new line (paragraph) instead of inserting a hidden
+// line break, so every lyric line stays its own block.
+const ShiftEnterNewLine = Extension.create({
+  name: 'shiftEnterNewLine',
+  addKeyboardShortcuts() {
+    return { 'Shift-Enter': () => this.editor.commands.splitBlock() }
+  },
+})
+
+const escapeHtml = (text) => text
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+
+// Plain-text paste: one paragraph per line; a blank line becomes an empty
+// paragraph (the stanza gap used across the library).
+const plainTextToLyricsHtml = (text) => text
+  .replace(/\r\n?/g, '\n')
+  .replace(/\n{3,}/g, '\n\n')
+  .split('\n')
+  .map((line) => (line.trim() ? `<p>${escapeHtml(line)}</p>` : '<p></p>'))
+  .join('')
 
 function LyricsEditor({ value, onChange }) {
+  // Headings and quotes apply to whole blocks, so every lyric line must be its
+  // own paragraph: songs stored with <br> line breaks are split on load, and
+  // pasted text/HTML is split the same way. Hard breaks are disabled.
+  const editorRef = useRef(null)
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ hardBreak: false }),
+      ShiftEnterNewLine,
       Placeholder.configure({ placeholder: 'Add lyrics here... Use headings for Verse, Chorus, Bridge labels.' }),
     ],
-    content: value || '',
+    content: splitLyricLines(value || ''),
+    editorProps: {
+      transformPastedHTML: (html) => splitLyricLines(html),
+      handlePaste: (_view, event) => {
+        const plain = event.clipboardData?.getData('text/plain')
+        const richHtml = event.clipboardData?.getData('text/html')
+        if (!plain || richHtml?.trim() || !editorRef.current) return false
+        event.preventDefault()
+        editorRef.current.chain().focus().insertContent(plainTextToLyricsHtml(plain) || '<p></p>').run()
+        return true
+      },
+    },
     onUpdate: ({ editor: tiptapEditor }) => onChange(tiptapEditor.getHTML()),
   })
+  editorRef.current = editor
 
   if (!editor) return null
-
-  const escapeHtml = (text) => text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-
-  const handlePaste = (event) => {
-    const plain = event.clipboardData?.getData('text/plain')
-    const richHtml = event.clipboardData?.getData('text/html')
-
-    if (!plain || richHtml?.trim()) return
-
-    event.preventDefault()
-    const normalized = plain.replace(/\r\n/g, '\n')
-    const blocks = normalized.split(/\n{2,}/).filter(Boolean)
-    const html = blocks.map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br />')}</p>`).join('')
-
-    editor.chain().focus().insertContent(html || '<p></p>').run()
-  }
 
   const ToolBtn = ({ onClick, active, children, title }) => (
     <button
@@ -79,7 +101,7 @@ function LyricsEditor({ value, onChange }) {
           <ToolBtn onClick={() => editor.chain().focus().redo().run()} title="Redo">↪</ToolBtn>
         </div>
       </div>
-      <EditorContent editor={editor} className="tiptap-editor" onPaste={handlePaste} />
+      <EditorContent editor={editor} className="tiptap-editor" />
     </div>
   )
 }

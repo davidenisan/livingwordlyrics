@@ -88,3 +88,33 @@ export function searchMatchSnippet(html = '', query = '', length = 180) {
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
+
+// Editor helper (browser only): headings and quotes apply to whole blocks, so
+// every lyric line must be its own paragraph. Splits paragraphs (and
+// headings) that contain <br> line breaks into one block per line; a blank
+// line (two breaks) becomes an empty paragraph, the stanza gap used across
+// the library. Trailing breaks are dropped.
+export function splitLyricLines(html = '') {
+  if (!html || !/<br\s*\/?>/i.test(html) || typeof DOMParser === 'undefined') return html
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html')
+
+  doc.body.querySelectorAll('p, h1, h2, h3, h4').forEach((block) => {
+    if (!block.querySelector('br')) return
+    const lines = [[]]
+    for (const node of [...block.childNodes]) {
+      if (node.nodeName === 'BR') lines.push([])
+      else lines[lines.length - 1].push(node)
+    }
+    while (lines.length > 1 && !lines[lines.length - 1].some((node) => node.textContent.trim())) lines.pop()
+
+    const replacements = lines.map((nodes) => {
+      const hasText = nodes.some((node) => node.textContent.trim())
+      const element = doc.createElement(hasText ? block.nodeName.toLowerCase() : 'p')
+      if (hasText) nodes.forEach((node) => element.appendChild(node))
+      return element
+    })
+    block.replaceWith(...replacements)
+  })
+
+  return doc.body.innerHTML
+}
