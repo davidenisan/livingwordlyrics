@@ -1,0 +1,33 @@
+/* "We've moved" notice shown on every page of the retired v1 site. */
+.moved-banner {
+  position: relative;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 16px;
+  padding: 10px 16px;
+  background: #b39554;
+  color: #1d1608;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+}
+.moved-banner p { margin: 0; }
+.moved-banner a { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.moved-banner-countdown { white-space: nowrap; }
+.moved-banner-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.moved-banner .moved-banner-go,
+.moved-banner-stay {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.moved-banner .moved-banner-go { background: #1d1608; color: #f8f1e0; border: 1px solid #1d1608; }
+.moved-banner-stay { background: transparent; color: inherit; border: 1px solid rgba(29, 22, 8, 0.45); }
+.moved-banner-stay:hover { background: rgba(0, 0, 0, 0.08); }
