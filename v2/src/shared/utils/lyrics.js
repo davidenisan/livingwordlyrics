@@ -43,9 +43,20 @@ export function decodeHtmlEntities(value = '') {
     .replace(/&gt;/g, '>')
 }
 
+// Search ignores apostrophes, so "Gods", "God's" and "God\u2019s" are the same
+// word (matches search_fold() in supabase/migrations/004).
+const APOSTROPHES = /['\u2018\u2019\u02bc`]/g
+const foldApostrophes = (value) => value.replace(APOSTROPHES, '').toLowerCase()
+
 export function searchTerms(query = '') {
-  const normalized = decodeHtmlEntities(query).replace(/[\u2018\u2019]/g, "'").toLowerCase().match(/[a-z0-9']+/gi) || []
+  const normalized = foldApostrophes(decodeHtmlEntities(query)).match(/[a-z0-9]+/gi) || []
   return [...new Set(normalized.filter((term) => term.length > 1))]
+}
+
+// Regex source for a folded term that tolerates an apostrophe after any
+// character, so "gods" finds "God's" in the original text.
+function termPattern(term) {
+  return [...term].map(escapeRegExp).join("['\u2018\u2019\u02bc`]?")
 }
 
 export function highlightText(value = '', query = '') {
@@ -54,10 +65,10 @@ export function highlightText(value = '', query = '') {
 
   if (!text || terms.length === 0) return [{ text, match: false }]
 
-  const pattern = new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'gi')
+  const pattern = new RegExp(`(${terms.map(termPattern).join('|')})`, 'gi')
   return text.split(pattern).filter(Boolean).map((part) => ({
     text: part,
-    match: terms.includes(part.toLowerCase()),
+    match: terms.includes(foldApostrophes(part)),
   }))
 }
 
@@ -67,9 +78,8 @@ export function searchMatchSnippet(html = '', query = '', length = 180) {
 
   if (!text) return { segments: [], prefix: '', suffix: '' }
 
-  const lower = text.toLowerCase()
   const firstMatch = terms.reduce((best, term) => {
-    const index = lower.indexOf(term)
+    const index = text.search(new RegExp(termPattern(term), 'i'))
     if (index === -1) return best
     return best === -1 ? index : Math.min(best, index)
   }, -1)
