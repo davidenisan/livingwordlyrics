@@ -100,10 +100,12 @@ export default function PublicLayout() {
       <footer className="public-footer">
         <p>Living Word Lyrics · Saints Community in Songs</p>
         <p>
-          Privacy: we don&apos;t use accounts or tracking cookies for visitors. Song reactions use an anonymous
-          session and a background bot check by Cloudflare Turnstile, which is covered by the{' '}
-          <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noreferrer">Cloudflare Turnstile Privacy Addendum</a>.
-          Recent searches are shown without any information about who searched.
+          No accounts or tracking cookies. Reactions use an anonymous session checked by{' '}
+          <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noreferrer">Cloudflare Turnstile</a>;
+          recent searches are anonymous.
+        </p>
+        <p>
+          Built by <a href="https://davidenisan.com" target="_blank" rel="noopener">davidenisan</a>
         </p>
       </footer>
     </div>
